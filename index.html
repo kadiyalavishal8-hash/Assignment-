@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Student Schedule Planner - Member 1</title>
+
+  <style>
+    /* ===== THEME: STUDENT SCHEDULE PLANNER ===== */
+    :root {
+      --ink: #1c2541;
+      --bg: #eef2fb;
+      --card: #ffffff;
+      --line: #d3dbf0;
+      --accent: #3a56d4;
+      --math: #4c78f0;
+      --sci: #2fa66f;
+      --eng: #e8638a;
+      --comp: #8a5cd6;
+      --hist: #f2993a;
+      --high: #d9363e;
+      --med: #f2b01e;
+      --low: #2fa66f;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body { font-family: "Segoe UI", Tahoma, Arial, sans-serif; background: var(--bg); color: var(--ink); line-height: 1.5; }
+
+    /* ---------- Header ---------- */
+    header {
+      background: var(--ink); color: #fff; padding: 22px 5%;
+      display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;
+    }
+    header h1 { font-size: 1.6rem; }
+    header p { color: #aab6e0; font-size: 0.95rem; }
+    .today { background: var(--accent); padding: 10px 18px; border-radius: 10px; text-align: center; }
+    .today b { display: block; font-size: 1.4rem; }
+
+    nav { background: #fff; border-bottom: 1px solid var(--line); padding: 0 5%; position: sticky; top: 0; z-index: 5; }
+    nav a { display: inline-block; padding: 14px 16px; color: var(--ink); text-decoration: none; font-weight: 600; border-bottom: 3px solid transparent; }
+    nav a:hover { color: var(--accent); border-bottom-color: var(--accent); }
+
+    main { padding: 26px 5%; }
+    h2 { font-size: 1.35rem; margin-bottom: 14px; }
+    .panel { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 22px; margin-bottom: 24px; }
+
+    /* ---------- Summary tiles ---------- */
+    .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .tile { background: var(--card); border: 1px solid var(--line); border-left: 6px solid var(--accent); border-radius: 10px; padding: 16px; }
+    .tile b { font-size: 1.8rem; display: block; }
+    .tile.t2 { border-left-color: var(--sci); }
+    .tile.t3 { border-left-color: var(--hist); }
+    .tile.t4 { border-left-color: var(--high); }
+
+    /* ---------- Two column layout ---------- */
+    .cols { display: grid; grid-template-columns: 2fr 1fr; gap: 24px; }
+
+    /* ---------- Weekly schedule ---------- */
+    .scroll { overflow-x: auto; }
+    table.week { width: 100%; border-collapse: collapse; min-width: 640px; }
+    .week th, .week td { border: 1px solid var(--line); padding: 10px 8px; text-align: center; font-size: 0.92rem; }
+    .week th { background: var(--ink); color: #fff; }
+    .week td:first-child { background: #f5f7fd; font-weight: 600; white-space: nowrap; }
+    .week td.today-col { box-shadow: inset 0 0 0 2px var(--accent); }
+    .math { background: #e1e9ff; color: #1f3f9c; }
+    .sci  { background: #d9f3e6; color: #17724a; }
+    .eng  { background: #fde0e9; color: #a3204b; }
+    .comp { background: #eadffb; color: #5a2da5; }
+    .hist { background: #fde8cf; color: #96540b; }
+    .rest { background: #f1f1f1; color: #777; }
+
+    .legend { margin-top: 14px; display: flex; flex-wrap: wrap; gap: 14px; font-size: 0.9rem; }
+    .legend span::before { content: ""; display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+    .legend .l1::before { background: var(--math); } .legend .l2::before { background: var(--sci); }
+    .legend .l3::before { background: var(--eng); }  .legend .l4::before { background: var(--comp); }
+    .legend .l5::before { background: var(--hist); }
+
+    /* ---------- To-do list (CSS only strike-through) ---------- */
+    .todo { list-style: none; }
+    .todo li { border-bottom: 1px solid var(--line); }
+    .todo label { display: flex; gap: 10px; align-items: center; padding: 11px 0; cursor: pointer; }
+    .todo input { width: 18px; height: 18px; accent-color: var(--accent); }
+    .todo input:checked + span { text-decoration: line-through; color: #8a93b4; }
+    .pill { margin-left: auto; font-size: 0.75rem; font-weight: 700; padding: 2px 10px; border-radius: 20px; color: #fff; }
+    .p-high { background: var(--high); } .p-med { background: var(--med); color: #3a2c00; } .p-low { background: var(--low); }
+
+    /* ---------- Study hours bars ---------- */
+    .hours { margin-bottom: 12px; font-size: 0.93rem; }
+    .track { height: 12px; background: #e6ebf8; border-radius: 6px; overflow: hidden; margin-top: 3px; }
+    .track i { display: block; height: 100%; border-radius: 6px; }
+
+    /* ---------- Deadlines table ---------- */
+    table.dead { width: 100%; border-collapse: collapse; min-width: 480px; }
+    .dead th, .dead td { padding: 11px 12px; text-align: left; border-bottom: 1px solid var(--line); }
+    .dead th { background: #f5f7fd; }
+    .dead tr:hover td { background: #f8faff; }
+
+    /* ---------- Add task form ---------- */
+    .row { display: flex; gap: 16px; flex-wrap: wrap; }
+    .row > div { flex: 1 1 200px; }
+    label.l { display: block; font-weight: 600; margin: 10px 0 4px; }
+    input[type=text], input[type=date], input[type=time], select, textarea {
+      width: 100%; padding: 10px; border: 1px solid #b9c4e4; border-radius: 6px; font: inherit; background: #fbfcff;
+    }
+    input:focus, select:focus, textarea:focus { outline: 3px solid #cbd6ff; border-color: var(--accent); }
+    .prio label { margin-right: 16px; }
+    button { margin-top: 16px; background: var(--accent); color: #fff; border: none; padding: 11px 26px; border-radius: 8px; font-size: 1rem; cursor: pointer; }
+    button:hover { background: #2a43b0; }
+    button.ghost { background: #e4e9f8; color: var(--ink); margin-left: 8px; }
+
+    footer { background: var(--ink); color: #aab6e0; text-align: center; padding: 18px; }
+
+    @media (max-width: 800px) { .cols { grid-template-columns: 1fr; } }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div>
+      <h1>My Study Planner</h1>
+      <p>Student: Member 1 Name | Class 12 - Science</p>
+    </div>
+    <div class="today">Thursday<b>26 Nov 2026</b></div>
+  </header>
+
+  <nav>
+    <a href="#overview">Overview</a>
+    <a href="#schedule">Schedule</a>
+    <a href="#tasks">To-do</a>
+    <a href="#deadlines">Deadlines</a>
+    <a href="#add">Add task</a>
+  </nav>
+
+  <main>
+    <!-- Summary -->
+    <div class="tiles" id="overview">
+      <div class="tile"><b>5</b>Classes today</div>
+      <div class="tile t2"><b>3.5 hrs</b>Self-study planned</div>
+      <div class="tile t3"><b>4</b>Tasks pending</div>
+      <div class="tile t4"><b>12 days</b>Until next exam</div>
+    </div>
+
+    <!-- Weekly timetable -->
+    <section class="panel" id="schedule">
+      <h2>Weekly schedule</h2>
+      <div class="scroll">
+        <table class="week">
+          <tr><th>Time</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th></tr>
+          <tr><td>8:00 - 9:00</td><td class="math">Maths</td><td class="sci">Physics</td><td class="eng">English</td><td class="comp today-col">Computers</td><td class="math">Maths</td><td class="hist">History</td></tr>
+          <tr><td>9:00 - 10:00</td><td class="sci">Chemistry</td><td class="math">Maths</td><td class="comp">Computers</td><td class="sci today-col">Physics</td><td class="eng">English</td><td class="rest">Revision</td></tr>
+          <tr><td>10:30 - 11:30</td><td class="eng">English</td><td class="hist">History</td><td class="math">Maths</td><td class="math today-col">Maths</td><td class="sci">Chemistry</td><td class="rest">Revision</td></tr>
+          <tr><td>11:30 - 12:30</td><td class="comp">Computers</td><td class="sci">Chemistry</td><td class="sci">Physics</td><td class="eng today-col">English</td><td class="hist">History</td><td class="rest">Free</td></tr>
+          <tr><td>2:00 - 4:00</td><td colspan="2" class="rest">Self-study</td><td class="comp">Lab</td><td class="rest today-col">Self-study</td><td class="sci">Lab</td><td class="rest">Free</td></tr>
+        </table>
+      </div>
+      <div class="legend">
+        <span class="l1">Maths</span><span class="l2">Science</span><span class="l3">English</span>
+        <span class="l4">Computers</span><span class="l5">History</span>
+      </div>
+    </section>
+
+    <div class="cols">
+      <!-- To-do list -->
+      <section class="panel" id="tasks">
+        <h2>Today's to-do list</h2>
+        <ul class="todo">
+          <li><label><input type="checkbox" checked><span>Finish Maths exercise 7.2</span><em class="pill p-med">Medium</em></label></li>
+          <li><label><input type="checkbox"><span>Physics lab record submission</span><em class="pill p-high">High</em></label></li>
+          <li><label><input type="checkbox"><span>Revise English essay format</span><em class="pill p-low">Low</em></label></li>
+          <li><label><input type="checkbox"><span>HTML and CSS assignment</span><em class="pill p-high">High</em></label></li>
+          <li><label><input type="checkbox"><span>Read History chapter 9</span><em class="pill p-med">Medium</em></label></li>
+        </ul>
+      </section>
+
+      <!-- Study hours -->
+      <section class="panel">
+        <h2>Study hours this week</h2>
+        <div class="hours">Maths - 6 hrs<div class="track"><i style="width:85%;background:var(--math)"></i></div></div>
+        <div class="hours">Science - 5 hrs<div class="track"><i style="width:70%;background:var(--sci)"></i></div></div>
+        <div class="hours">English - 3 hrs<div class="track"><i style="width:45%;background:var(--eng)"></i></div></div>
+        <div class="hours">Computers - 4 hrs<div class="track"><i style="width:58%;background:var(--comp)"></i></div></div>
+        <div class="hours">History - 2 hrs<div class="track"><i style="width:30%;background:var(--hist)"></i></div></div>
+      </section>
+    </div>
+
+    <!-- Deadlines -->
+    <section class="panel" id="deadlines">
+      <h2>Upcoming deadlines and exams</h2>
+      <div class="scroll">
+        <table class="dead">
+          <tr><th>Date</th><th>Subject</th><th>Item</th><th>Priority</th></tr>
+          <tr><td>27 Nov</td><td>Physics</td><td>Lab record</td><td><em class="pill p-high">High</em></td></tr>
+          <tr><td>29 Nov</td><td>Computers</td><td>HTML and CSS assignment</td><td><em class="pill p-high">High</em></td></tr>
+          <tr><td>02 Dec</td><td>Maths</td><td>Unit test 3</td><td><em class="pill p-med">Medium</em></td></tr>
+          <tr><td>08 Dec</td><td>English</td><td>Essay submission</td><td><em class="pill p-low">Low</em></td></tr>
+        </table>
+      </div>
+    </section>
+
+    <!-- Add task form -->
+    <section class="panel" id="add">
+      <h2>Add a new task</h2>
+      <form action="#" method="post">
+        <label class="l" for="title">Task title</label>
+        <input type="text" id="title" placeholder="Example: Complete chemistry worksheet" required>
+
+        <div class="row">
+          <div>
+            <label class="l" for="subject">Subject</label>
+            <select id="subject">
+              <option>Maths</option><option>Physics</option><option>Chemistry</option>
+              <option>English</option><option>Computers</option><option>History</option>
+            </select>
+          </div>
+          <div><label class="l" for="due">Due date</label><input type="date" id="due" required></div>
+          <div><label class="l" for="time">Study time</label><input type="time" id="time"></div>
+        </div>
+
+        <label class="l">Priority</label>
+        <div class="prio">
+          <label><input type="radio" name="prio" checked> High</label>
+          <label><input type="radio" name="prio"> Medium</label>
+          <label><input type="radio" name="prio"> Low</label>
+        </div>
+
+        <label class="l" for="notes">Notes</label>
+        <textarea id="notes" rows="3" placeholder="Chapters, page numbers, reminders"></textarea>
+
+        <button type="submit">Add to planner</button>
+        <button type="reset" class="ghost">Clear</button>
+      </form>
+    </section>
+  </main>
+
+  <footer>&copy; 2026 My Study Planner | Made by Member 1</footer>
+</body>
+</html>
